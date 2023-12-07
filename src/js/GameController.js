@@ -123,10 +123,42 @@ export default class GameController {
     }
     if (GameState.characterSelected === true) {
       const leftRightMove = this.horizontalMovementAccess(this.ourPlayer);
-      
+      const upDownMove = this.verticalMovementAccess(this.ourPlayer);
+      const diagonalMove = this.diagonalLeftRightMovementAccess(this.ourPlayer);
+      const diagonalMove1 = this.diagonalRightLeftMovementAccess(this.ourPlayer);
+
+
       const accessCell = leftRightMove.forEach(el => {
         if (el === index) {
-          this.gamePlay.selectCell(index, 'green')
+          if (this.gamePlay.cells[index].children[0]) {
+            this.gamePlay.setCursor('pointer');
+          } else {
+            this.gamePlay.selectCell(index, 'green');
+            this.gamePlay.setCursor('pointer');
+          }
+
+        }
+      });
+
+      const accessCellv = upDownMove.forEach(el => {
+        if (el === index) {
+          if (this.gamePlay.cells[index].children[0]) {
+            this.gamePlay.setCursor('pointer');
+          } else {
+            this.gamePlay.selectCell(index, 'green');
+            this.gamePlay.setCursor('pointer');
+          }
+        }
+      });
+      const accessCelld = diagonalMove.forEach(el => {
+        if (el === index) {
+          if (this.gamePlay.cells[index].children[0]) {
+            this.gamePlay.setCursor('pointer');
+          } else {
+            this.gamePlay.selectCell(index, 'green');
+            this.gamePlay.setCursor('pointer');
+          }
+
         }
       });
     }
@@ -138,8 +170,136 @@ export default class GameController {
     return result;
   }
 
-  verticalMovementAccess(character){
-    
+
+
+
+  diagonalRightLeftMovementAccess(character){
+    const moveAttackCharacter = this.getMoveAttackCharacter(character);
+
+
+    let array = [];
+
+    for (let i = 0; i < this.gamePlay.boardSize; i++) {
+      let arr = [];
+      
+      let r = i * this.gamePlay.boardSize;
+      console.log(r)
+      for (let j = 0; j <= r; j = j + this.gamePlay.boardSize - 1) {
+        
+
+        arr.push(i + j)
+      }
+      
+      let element = arr.forEach(el => {
+        if (el === character.position) {
+          array = arr;
+        }
+      });
+    }
+    console.log(array)
+  }
+
+
+
+
+
+
+
+
+
+  diagonalLeftRightMovementAccess(character) {
+    const amountDiagonal = ((this.gamePlay.boardSize * 2) - 1);
+
+    const moveAttackCharacter = this.getMoveAttackCharacter(character);
+
+    let array = [];
+
+    for (let i = 0; i < this.gamePlay.boardSize; i++) {
+      let arr = [];
+      let r = (this.gamePlay.boardSize * this.gamePlay.boardSize - 1) - (i * this.gamePlay.boardSize);
+      for (let j = 0; j <= r; j = j + this.gamePlay.boardSize + 1) {
+        arr.push(i + j)
+      }
+      let element = arr.forEach(el => {
+        if (el === character.position) {
+          array = arr;
+        }
+      });
+    }
+    // console.log(array)
+
+    for (let i = 0; i < this.gamePlay.boardSize * this.gamePlay.boardSize - this.gamePlay.boardSize; i = i + this.gamePlay.boardSize) {
+      let arr = [];
+      let r = ((this.gamePlay.boardSize * this.gamePlay.boardSize - 1) - i);
+
+      for (let j = 0; j <= r; j = j + this.gamePlay.boardSize + 1) {
+
+        arr.push(i + j)
+      }
+      let element = arr.forEach(el => {
+        if (el === character.position) {
+          array = arr;
+        }
+      });
+    }
+    // console.log(array)
+
+
+    let index = array.findIndex(el => el === character.position);
+
+    let upLeftMove;
+    let downRightMove;
+
+    ((index - moveAttackCharacter.move) >= 0) ?
+      upLeftMove = moveAttackCharacter.move : upLeftMove = index;
+
+    ((index + moveAttackCharacter.move) <= (array.length - 1)) ?
+    downRightMove = moveAttackCharacter.move : downRightMove = (array.length - 1) - index;
+
+    const arr7 = [];
+
+    for (let i = (index - upLeftMove); i < index; i++) {
+      arr7.push(array[i])
+    }
+    for (let i = index + 1; i > index && i <= (index + downRightMove); i++) {
+      arr7.push(array[i])
+    }
+return arr7
+  }
+
+
+  verticalMovementAccess(character) {
+    const moveAttackCharacter = this.getMoveAttackCharacter(character);
+
+    const upDownMove = [];
+
+    const column = character.position % this.gamePlay.boardSize;
+
+    for (let i = 0; i < (this.gamePlay.boardSize * this.gamePlay.boardSize - 1); i++) {
+      if (i % this.gamePlay.boardSize === column) {
+        upDownMove.push(i);
+      }
+    }
+    let index = upDownMove.findIndex(el => el === character.position);
+
+    let upMove;
+    let downMove;
+
+    ((index - moveAttackCharacter.move) >= 0) ?
+      upMove = moveAttackCharacter.move : upMove = index;
+
+    ((index + moveAttackCharacter.move) <= (upDownMove.length - 1)) ?
+      downMove = moveAttackCharacter.move : downMove = (upDownMove.length - 1) - index;
+
+    const arr = [];
+
+    for (let i = (index - upMove); i < index; i++) {
+      arr.push(upDownMove[i])
+    }
+    for (let i = index + 1; i > index && i <= (index + downMove); i++) {
+      arr.push(upDownMove[i])
+    }
+    return arr;
   }
   horizontalMovementAccess(character) {
     const moveAttackCharacter = this.getMoveAttackCharacter(character);
