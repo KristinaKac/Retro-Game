@@ -1,4 +1,5 @@
 import Team from "./Team";
+import PositionedCharacter from "./PositionedCharacter";
 
 /**
  * Формирует экземпляр персонажа из массива allowedTypes со
@@ -38,4 +39,16 @@ export function generateTeam(allowedTypes, maxLevel, characterCount) {
     arr.push(playerGenerator.next().value);
   }
   return new Team(arr);
+}
+
+export function randomInitPositions(team, initPositions, teamPositions) {
+  let positions = new Set();
+
+  while (positions.size < team.characters.length) {
+    positions.add(initPositions[Math.floor(Math.random() * initPositions.length)]);
+  }
+  let arr = Array.from(positions);
+  for (let i = 0; i < team.characters.length; i++) {
+    teamPositions.push(new PositionedCharacter(team.characters[i], arr[i]));
+  }
 }
