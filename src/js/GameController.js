@@ -11,6 +11,7 @@ import { Vampire } from './characters/Vampire';
 import PositionedCharacter from './PositionedCharacter';
 import GamePlay from './GamePlay';
 import GameState from './GameState';
+import { calcTileType } from './utils';
 
 
 export default class GameController {
@@ -71,10 +72,6 @@ export default class GameController {
     this.gameState.attackMove = null;
   }
 
-
-  redrawingCharacterMove(index) {
-
-  }
   onCellEnter(index) {
     this.gameState.enterIndex = index;
 
@@ -82,15 +79,25 @@ export default class GameController {
       this.gamePlay.showCellTooltip(this.getInfoCharacter(this.gameState.enterIndex), this.gameState.enterIndex);
       this.gamePlay.setCursor('pointer');
     }
-    
+    this.displayOfAvailableMoves(this.gameState.enterIndex);
 
-      console.log(this.displayOfAvailableMoves(this.gameState.enterIndex));
-    
+    if (this.gameState.typeCurrentIndex === 'character') {
+      const attack = this.availableAttack(this.gameState.currentIndex, this.gameState.attackMove);
+      console.log(this.gameState.teamCompetitors)
+      const competitorsPositions = [];
+      this.gameState.teamCompetitors.filter(el => competitorsPositions.push(el.position));
+      
+      if (attack.includes(this.gameState.enterIndex) && competitorsPositions.includes(this.gameState.enterIndex)) {
+        this.gamePlay.selectCell(index, 'red');
+        this.gamePlay.setCursor('crosshair');
+      }
+    }
   }
 
   onCellClick(index) {
     this.gameState.currentIndex = index;
     this.typeCurrentIndex();
+    this.getMoveAttack();
 
     if (this.gameState.typeCurrentIndex === 'character') {
       if (this.gamePlay.cells[this.gameState.currentIndex].className.includes('selected-yellow')) {
@@ -101,23 +108,47 @@ export default class GameController {
         this.gameState.currentCharacterPosition = null;
         return;
       }
-      if(this.gameState.previousIndex != -1){
+      if (this.gameState.previousIndex != -1) {
         this.gamePlay.deselectCell(this.gameState.previousIndex);
       }
       this.gamePlay.selectCell(index, 'yellow');
+      // this.availableAttack();
     }
 
     if (this.gameState.typeCurrentIndex === 'empty') {
-      this.gamePlay.deselectCell(this.gameState.previousIndex);
+      if (this.gameState.previousIndex != -1) {
+        this.gamePlay.deselectCell(this.gameState.previousIndex);
+      }
+
+      if (this.gameState.previousType === 'character') {
+        if (this.gamePlay.cells[this.gameState.currentIndex].className.includes('selected-green')) {
+          this.redrawingMove(this.gameState.previousCharacterPosition);
+          this.gamePlay.deselectCell(this.gameState.currentIndex);
+        }
+      }
     }
 
     if (this.gameState.typeCurrentIndex === 'competitor') {
-      this.gamePlay.deselectCell(this.gameState.previousIndex);
+      if (this.gameState.previousIndex != -1) {
+        this.gamePlay.deselectCell(this.gameState.previousIndex);
+      }
+      if (this.gameState.previousType === 'character') {
+        const attack = this.availableAttack(this.gameState.previousIndex, this.gameState.previousAttackMove);
+        if (attack.includes(this.gameState.currentIndex)) {
+          // логика по атаке соперника
+        }
+      }
     }
 
     this.gameState.previousIndex = this.gameState.currentIndex;
     this.gameState.previousType = this.gameState.typeCurrentIndex;
     this.gameState.previousCharacterPosition = this.gameState.currentCharacterPosition;
+    this.gameState.previousAttackMove = this.gameState.attackMove;
+  }
+
+  redrawingMove(character) {
+    this.gameState.teamPlayers.find(el => { if (el === character) { el.position = this.gameState.currentIndex } });
+    this.gamePlay.redrawPositions([...this.gameState.teamPlayers, ...this.gameState.teamCompetitors]);
   }
 
   typeCurrentIndex() {
@@ -141,8 +172,6 @@ export default class GameController {
     this.gameState.currentCharacterPosition = null;
     return GamePlay.showError('Ошибка');
   }
-
-
 
   displayOfAvailableMoves(index) {
     if (this.gameState.typeCurrentIndex === 'character') {
@@ -176,9 +205,6 @@ export default class GameController {
     });
     return move;
   }
-
-
-
 
   diagonalRightLeftFirstPart() {
     let diagonalRightLeftMove = [];
@@ -237,6 +263,7 @@ export default class GameController {
         }
       });
     }
+
     return this.getAccessMove(diagonalLeftRightMove);
   }
 
@@ -302,7 +329,7 @@ export default class GameController {
 
     const index = array.findIndex(el => el === this.gameState.currentCharacterPosition.position);
 
-      ((index - this.gameState.attackMove.move) >= 0) ?
+    ((index - this.gameState.attackMove.move) >= 0) ?
       firstMove = this.gameState.attackMove.move : firstMove = index;
 
     ((index + this.gameState.attackMove.move) <= (array.length - 1)) ?
@@ -337,5 +364,67 @@ export default class GameController {
       this.gamePlay.deselectCell(index);
     }
 
+  }
+
+  availableAttack(index, attack) {
+
+    const board = this.gamePlay.boardSize; // 8
+
+    let leftMove = index;
+    let rightMove = index;
+
+    const top = [];
+    const left = [];
+    const right = [];
+    const bottom = [];
+    for (let i = 0; i < board; i++) {
+      top.push(i);
+      left.push(i * board);
+      right.push(i * board + (board - 1))
+      bottom.push(board * board - board + i);
+    }
+
+    for (let i = 1; i <= attack.attackRange; i++) {
+      if (right.includes(rightMove)) {
+        break;
+      }
+      rightMove = rightMove + 1;
+    }
+    for (let i = 1; i <= attack.attackRange; i++) {
+      if (left.includes(leftMove)) {
+        break;
+      }
+      leftMove = leftMove - 1;
+    }
+    let upMove = leftMove;
+    for (let i = 1; i <= attack.attackRange; i++) {
+      if (top.includes(upMove)) {
+        break;
+      }
+      upMove = upMove - board;
+    }
+    let bottomMove = leftMove;
+    for (let i = 1; i <= attack.attackRange; i++) {
+      if (bottom.includes(bottomMove)) {
+        break;
+      }
+      bottomMove = bottomMove + board;
+    }
+
+    const lengthHorizontal = rightMove - leftMove + 1;
+
+    let availableAttack = [];
+
+
+    for (let i = 0; i < lengthHorizontal; i++) {
+      for (let j = upMove; j <= bottomMove; j = j + board) {
+        availableAttack.push(i + j);
+      }
+      bottomMove = bottomMove + 1;
+    }
+
+    availableAttack = availableAttack.filter(el => el != index);
+
+    return availableAttack;
   }
 }

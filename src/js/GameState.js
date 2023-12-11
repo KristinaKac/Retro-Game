@@ -25,7 +25,7 @@ export default class GameState {
     this.previousIndex = -1;
     this.previousType = null;
     this.previousCharacterPosition = null;
-
+    this.previousAttackMove = null;
 
     this.playerTypes = [Bowman, Swordsman, Magician];
     this.competitorTypes = [Vampire, Undead, Daemon];
@@ -45,6 +45,5 @@ export default class GameState {
     // TODO: create object
     return null;
   }
-
 
 }
