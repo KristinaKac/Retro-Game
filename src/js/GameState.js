@@ -11,6 +11,8 @@ export default class GameState {
 
   constructor() {
 
+    this.level = 1;
+
     this.currentIndex = null;
     this.typeCurrentIndex = null;
 

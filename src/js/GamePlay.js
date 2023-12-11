@@ -211,6 +211,7 @@ export default class GamePlay {
       damageEl.textContent = damage;
       damageEl.classList.add('damage');
       cell.appendChild(damageEl);
+      console.log(cell)
 
       damageEl.addEventListener('animationend', () => {
         cell.removeChild(damageEl);

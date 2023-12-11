@@ -39,7 +39,7 @@ export default class GameController {
 
   init() {
 
-    this.gamePlay.drawUi('prairie');
+    this.levels();
 
     const teamPlayers = generateTeam(this.gameState.playerTypes, 4, 4);
     const teamCompetitors = generateTeam(this.gameState.competitorTypes, 4, 4);
@@ -54,6 +54,23 @@ export default class GameController {
 
     this.gamePlay.redrawPositions([...this.gameState.teamPlayers, ...this.gameState.teamCompetitors]);
     this.someMethodName();
+  }
+
+  levels() {
+    switch (this.gameState.level) {
+      case 1:
+        this.gamePlay.drawUi('prairie');
+        break;
+      case 2:
+        this.gamePlay.drawUi('desert');
+        break;
+      case 3:
+        this.gamePlay.drawUi('arctic');
+        break;
+      case 4:
+        this.gamePlay.drawUi('mountain');
+        break;
+    }
   }
 
   someMethodName() {
@@ -83,10 +100,9 @@ export default class GameController {
 
     if (this.gameState.typeCurrentIndex === 'character') {
       const attack = this.availableAttack(this.gameState.currentIndex, this.gameState.attackMove);
-      console.log(this.gameState.teamCompetitors)
       const competitorsPositions = [];
       this.gameState.teamCompetitors.filter(el => competitorsPositions.push(el.position));
-      
+
       if (attack.includes(this.gameState.enterIndex) && competitorsPositions.includes(this.gameState.enterIndex)) {
         this.gamePlay.selectCell(index, 'red');
         this.gamePlay.setCursor('crosshair');
@@ -94,8 +110,9 @@ export default class GameController {
     }
   }
 
-  onCellClick(index) {
+  async onCellClick(index) {
     this.gameState.currentIndex = index;
+
     this.typeCurrentIndex();
     this.getMoveAttack();
 
@@ -135,7 +152,11 @@ export default class GameController {
       if (this.gameState.previousType === 'character') {
         const attack = this.availableAttack(this.gameState.previousIndex, this.gameState.previousAttackMove);
         if (attack.includes(this.gameState.currentIndex)) {
-          // логика по атаке соперника
+          try {
+            await this.attackCalculation(this.gameState.previousCharacterPosition.character, this.gameState.currentCharacterPosition.character, this.gameState.currentIndex);
+          } catch (error) {
+            console.log(error)
+          }
         }
       }
     }
@@ -144,6 +165,57 @@ export default class GameController {
     this.gameState.previousType = this.gameState.typeCurrentIndex;
     this.gameState.previousCharacterPosition = this.gameState.currentCharacterPosition;
     this.gameState.previousAttackMove = this.gameState.attackMove;
+  }
+
+  async attackCalculation(attacker, target, targetIndex) {
+    const damage = Math.round(Math.max(attacker.attack - target.defence, attacker.attack * 0.1));
+    console.log(damage)
+    try {
+      await this.gamePlay.showDamage(targetIndex, damage);
+    } catch (error) {
+      console.log(error)
+    }
+    target.health = target.health - damage;
+
+
+    // проверка мертв ли персонаж
+    this.checkDeath(target);
+    // Проверка остались ли игроки
+    this.checkCharacters();
+
+    console.log(this.gameState.teamCompetitors);
+
+    this.gamePlay.redrawPositions([...this.gameState.teamPlayers, ...this.gameState.teamCompetitors]);
+  }
+
+  checkDeath(target) {
+    if (target.health <= 0) {
+      this.gameState.teamPlayers.forEach((el, index, array) => { if (el.character === target) { array.splice(index, 1) } });
+      this.gameState.teamCompetitors.forEach((el, index, array) => { if (el.character === target) { array.splice(index, 1) } })
+    }
+  }
+  checkCharacters() {
+    if (this.gameState.teamPlayers.length === 0 || this.gameState.teamCompetitors.length === 0) {
+      this.gameState.level++;
+      this.levels();
+    }
+  }
+
+  onCellLeave(index) {
+    if (this.gamePlay.cells[index].children[0]) {
+      this.gamePlay.hideCellTooltip(index);
+      this.gamePlay.setCursor('auto');
+    } else {
+      this.gamePlay.deselectCell(index);
+    }
+    if (this.gameState.typeCurrentIndex === 'character') {
+      const competitorsPositions = [];
+      this.gameState.teamCompetitors.filter(el => competitorsPositions.push(el.position));
+      if (competitorsPositions.includes(index)) {
+        this.gamePlay.deselectCell(index);
+        this.gamePlay.setCursor('auto');
+      }
+    }
   }
 
   redrawingMove(character) {
@@ -168,9 +240,14 @@ export default class GameController {
 
       return;
     }
+
+    const competit = this.gameState.teamCompetitors.find(el =>
+      this.gamePlay.cells[this.gameState.currentIndex].children[0].className.includes(el.character.type) &&
+      el.position === this.gameState.currentIndex
+    )
     this.gameState.typeCurrentIndex = 'competitor';
-    this.gameState.currentCharacterPosition = null;
-    return GamePlay.showError('Ошибка');
+    this.gameState.currentCharacterPosition = competit;
+    // return GamePlay.showError('Ошибка');
   }
 
   displayOfAvailableMoves(index) {
@@ -353,16 +430,6 @@ export default class GameController {
     const charact = positionedCharacter.character;
     const message = `\u{1F396}${charact.level} \u{2694}${charact.attack} \u{1F6E1}${charact.defence} \u{2764}${charact.health}`;
     return message;
-
-  }
-
-  onCellLeave(index) {
-    if (this.gamePlay.cells[index].children[0]) {
-      this.gamePlay.hideCellTooltip(index);
-      this.gamePlay.setCursor('auto');
-    } else {
-      this.gamePlay.deselectCell(index);
-    }
 
   }
 
