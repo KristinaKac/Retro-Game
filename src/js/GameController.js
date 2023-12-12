@@ -28,6 +28,9 @@ export default class GameController {
 
 
 
+
+
+
   initPositions(column1, column2, resultArr) {
     for (let i = 0; i < ((this.gamePlay.boardSize * this.gamePlay.boardSize) - 1); i++) {
       if (i % this.gamePlay.boardSize === column1 || i % this.gamePlay.boardSize === column2) {
@@ -54,6 +57,8 @@ export default class GameController {
 
     this.gamePlay.redrawPositions([...this.gameState.teamPlayers, ...this.gameState.teamCompetitors]);
     this.someMethodName();
+
+
   }
 
   levels() {
@@ -111,11 +116,13 @@ export default class GameController {
   }
 
   async onCellClick(index) {
+
     this.gameState.currentIndex = index;
 
     this.typeCurrentIndex();
     this.getMoveAttack();
 
+    // нажали два раза на одного и того же персонажа
     if (this.gameState.typeCurrentIndex === 'character') {
       if (this.gamePlay.cells[this.gameState.currentIndex].className.includes('selected-yellow')) {
         this.gamePlay.deselectCell(this.gameState.currentIndex);
@@ -129,7 +136,7 @@ export default class GameController {
         this.gamePlay.deselectCell(this.gameState.previousIndex);
       }
       this.gamePlay.selectCell(index, 'yellow');
-      // this.availableAttack();
+
     }
 
     if (this.gameState.typeCurrentIndex === 'empty') {
@@ -141,6 +148,16 @@ export default class GameController {
         if (this.gamePlay.cells[this.gameState.currentIndex].className.includes('selected-green')) {
           this.redrawingMove(this.gameState.previousCharacterPosition);
           this.gamePlay.deselectCell(this.gameState.currentIndex);
+
+          this.gamePlay.selectCell(this.gameState.currentIndex, 'yellow');
+
+          this.gameState.currentIndex = this.gameState.currentIndex;
+          this.gameState.typeCurrentIndex = this.gameState.previousType;
+          this.gameState.currentCharacterPosition = this.gameState.previousCharacterPosition;
+          this.gameState.attackMove = this.gameState.previousAttackMove;
+
+
+          this.moveOpponent();
         }
       }
     }
@@ -157,6 +174,12 @@ export default class GameController {
           } catch (error) {
             console.log(error)
           }
+          this.gamePlay.selectCell(this.gameState.previousIndex, 'yellow');
+
+          this.gameState.currentIndex = this.gameState.previousIndex;
+          this.gameState.typeCurrentIndex = this.gameState.previousType;
+          this.gameState.currentCharacterPosition = this.gameState.previousCharacterPosition;
+          this.gameState.attackMove = this.gameState.previousAttackMove;
         }
       }
     }
@@ -166,6 +189,41 @@ export default class GameController {
     this.gameState.previousCharacterPosition = this.gameState.currentCharacterPosition;
     this.gameState.previousAttackMove = this.gameState.attackMove;
   }
+
+  async moveOpponent() {
+    this.move = 'opponent';
+
+    const randomOpponent = this.gameState.teamCompetitors[Math.floor(Math.random() * this.gameState.teamCompetitors.length)];
+    const moveAttack = this.gameState.moveRangeAttack.find(el => el.name === randomOpponent.character.type);
+    console.log(randomOpponent)
+    // console.log(moveAttack)
+    console.log(this.gameState.teamPlayers)
+
+    let attack = this.availableAttack(randomOpponent.position, moveAttack);
+
+    attack = attack.filter(el => this.gamePlay.cells[el].children[0]);
+
+    
+
+
+    if(attack.length != 0){
+      
+    }
+
+    
+    console.log(attack)
+    // if (attack.includes(this.gameState.currentIndex)) {
+    //   try {
+    //     await this.attackCalculation(, this.gameState.currentCharacterPosition.character, this.gameState.currentIndex);
+    //   } catch (error) {
+    //     console.log(error)
+    //   }
+    // }
+  }
+
+
+
+
 
   async attackCalculation(attacker, target, targetIndex) {
     const damage = Math.round(Math.max(attacker.attack - target.defence, attacker.attack * 0.1));
@@ -215,6 +273,9 @@ export default class GameController {
         this.gamePlay.deselectCell(index);
         this.gamePlay.setCursor('auto');
       }
+    }
+    if (this.gameState.typeCurrentIndex === 'competitor') {
+      this.gamePlay.deselectCell(index);
     }
   }
 
