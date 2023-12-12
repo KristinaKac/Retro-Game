@@ -15,21 +15,22 @@ export default class GameState {
 
     this.level = 1;
 
+    this.enterIndex = null;
+
     this.currentIndex = null;
     this.typeCurrentIndex = null;
-
-    this.enterIndex = null
-
     this.currentCharacterPosition = null;
-    this.attackMove = null;
+    this.currentAttackMove = null;
+    this.currentCell = null;
 
     this.teamPlayers = [];
     this.teamCompetitors = [];
 
-    this.previousIndex = -1;
+    this.previousIndex = null;
     this.previousType = null;
     this.previousCharacterPosition = null;
     this.previousAttackMove = null;
+    this.previousCell = null;
 
     this.playerTypes = [Bowman, Swordsman, Magician];
     this.competitorTypes = [Vampire, Undead, Daemon];

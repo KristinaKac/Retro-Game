@@ -195,6 +195,11 @@ export default class GamePlay {
     cell.classList.remove(...Array.from(cell.classList)
       .filter(o => o.startsWith('selected')));
   }
+  deselectCell(index) {
+    const cell = this.cells[index];
+    cell.classList.remove(...Array.from(cell.classList)
+      .filter(o => o.startsWith('selected')));
+  }
 
   showCellTooltip(message, index) {
     this.cells[index].title = message;
@@ -211,7 +216,6 @@ export default class GamePlay {
       damageEl.textContent = damage;
       damageEl.classList.add('damage');
       cell.appendChild(damageEl);
-      console.log(cell)
 
       damageEl.addEventListener('animationend', () => {
         cell.removeChild(damageEl);
