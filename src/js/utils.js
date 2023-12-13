@@ -202,7 +202,6 @@ export function getAttackBorder(attack, arr, acc, index) {
   }
   return move;
 }
-
 export function availableAttack(index, attack, board) {
 
   const top = []; const left = []; const right = []; const bottom = [];

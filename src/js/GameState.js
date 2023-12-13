@@ -16,6 +16,7 @@ export default class GameState {
     this.level = 1;
 
     this.enterIndex = null;
+    this.enterCell = null;
 
     this.currentIndex = null;
     this.typeCurrentIndex = null;
