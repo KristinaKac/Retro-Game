@@ -11,12 +11,15 @@ export default class GameState {
 
   constructor() {
 
-    this.move = 'player'; // opponent
+    this.move = 'player';
 
     this.level = 1;
+    this.amountParticipants = 2;
 
     this.enterIndex = null;
     this.enterCell = null;
+
+    this.focusCharacter = false;
 
     this.currentIndex = null;
     this.typeCurrentIndex = null;
@@ -37,13 +40,16 @@ export default class GameState {
     this.competitorTypes = [Vampire, Undead, Daemon];
 
     this.moveRangeAttack = [
-      { name: 'bowman', move: 2, attackRange: 2 },
-      { name: 'swordsman', move: 4, attackRange: 1 },
-      { name: 'magician', move: 1, attackRange: 4 },
-      { name: 'vampire', move: 2, attackRange: 2 },
-      { name: 'undead', move: 4, attackRange: 1 },
-      { name: 'daemon', move: 1, attackRange: 4 }
+      { name: 'bowman', type: 'player', move: 2, attackRange: 2 },
+      { name: 'swordsman', type: 'player', move: 4, attackRange: 1 },
+      { name: 'magician', type: 'player', move: 1, attackRange: 4 },
+      { name: 'vampire', type: 'competitor', move: 2, attackRange: 2 },
+      { name: 'undead', type: 'competitor', move: 4, attackRange: 1 },
+      { name: 'daemon', type: 'competitor', move: 1, attackRange: 4 }
     ];
+
+    this.initPlayersPositions = null;
+    this.initCompetitorsPositions = null;
 
   }
   static from(object) {
