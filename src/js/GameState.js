@@ -7,6 +7,7 @@ import { Daemon } from './characters/Daemon';
 
 
 
+
 export default class GameState {
 
   constructor() {
@@ -27,14 +28,10 @@ export default class GameState {
     this.currentAttackMove = null;
     this.currentCell = null;
 
+    this.r = null;
+
     this.teamPlayers = [];
     this.teamCompetitors = [];
-
-    this.previousIndex = null;
-    this.previousType = null;
-    this.previousCharacterPosition = null;
-    this.previousAttackMove = null;
-    this.previousCell = null;
 
     this.playerTypes = [Bowman, Swordsman, Magician];
     this.competitorTypes = [Vampire, Undead, Daemon];

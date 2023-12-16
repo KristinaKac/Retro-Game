@@ -15,7 +15,7 @@ export function* characterGenerator(allowedTypes, maxLevel) {
   while (true) {
     const randomCharacter = allowedTypes[Math.floor(Math.random() * allowedTypes.length)];
     let level = Math.ceil(Math.random() * maxLevel);
-    let character = new randomCharacter(level)
+    let character = new randomCharacter(level);
     yield character;
   }
 }

@@ -7,6 +7,9 @@ import {
 
 import GameState from './GameState';
 import GamePlay from './GamePlay';
+import Team from './Team';
+import { Bowman } from './characters/Bowman';
+import Character from './Character';
 
 export default class GameController {
   constructor(gamePlay, stateService) {
@@ -27,10 +30,17 @@ export default class GameController {
   }
 
   init() {
+
+    this.gameState = new GameState();
+
+    this.gamePlay.cellClickListeners = [];
+    this.gamePlay.cellEnterListeners = [];
+    this.gamePlay.cellLeaveListeners = [];
+
     this.levels();
 
-    const teamPlayers = generateTeam(this.gameState.playerTypes, 1, 2);
-    const teamCompetitors = generateTeam(this.gameState.competitorTypes, 1, 2);
+    const teamPlayers = generateTeam(this.gameState.playerTypes, 1, this.gameState.amountParticipants);
+    const teamCompetitors = generateTeam(this.gameState.competitorTypes, 1, this.gameState.amountParticipants);
 
     this.drawingPlayingField(teamPlayers, teamCompetitors);
 
@@ -70,16 +80,33 @@ export default class GameController {
     btn.forEach(el => el.addEventListener('mouseover', function () { el.style.cursor = 'pointer' }))
   }
   onNewGameClick() {
-   
-    console.log('newgame')
+    this.init();
   }
   onSaveGameClick() {
-    
-    console.log('newgame')
+    this.stateService.save(this.gameState);
   }
   onLoadGameClick() {
+    const loadedState = this.stateService.load();
     
-    console.log('newgame')
+    if (!loadedState) {
+      throw new Error('Доступных сохранений нет.');
+    }
+
+    this.gameState.move = loadedState.move;
+
+    this.gameState.level = loadedState.level;
+    this.levels();
+
+    this.gameState.teamPlayers = loadedState.teamPlayers;
+    this.gameState.teamCompetitors = loadedState.teamCompetitors;
+
+    this.gamePlay.cellClickListeners = [];
+    this.gamePlay.cellEnterListeners = [];
+    this.gamePlay.cellLeaveListeners = [];
+
+    this.gamePlay.redrawPositions([...this.gameState.teamPlayers, ...this.gameState.teamCompetitors]);
+
+    this.addListeners();
   }
 
   onCellEnter(index) {
@@ -276,8 +303,6 @@ export default class GameController {
 
         const randomMove = array[Math.floor(Math.random() * array.length)];
         this.redrawingMove(randomCompetitor, randomMove, this.gameState.teamCompetitors);
-        console.log(this.gameState.teamPlayers)
-        console.log(this.gameState.teamCompetitors)
         this.gamePlay.redrawPositions([...this.gameState.teamPlayers, ...this.gameState.teamCompetitors]);
       }
       this.gameState.move = 'player';
@@ -368,40 +393,23 @@ export default class GameController {
     const playersDead = this.isTeamDead(this.gameState.teamPlayers);
     const competitorsDead = this.isTeamDead(this.gameState.teamCompetitors);
 
-    if (playersDead === true && this.gameState.level === 4) {
-      // конец игры
-      return;
-    }
-    // if (playersDead === true || competitorsDead === true) {
-    //   this.gameState.level++;
-    //   this.levels();
-    // }
-    if (playersDead === true) {
-
-      this.gamePlay.setCursor('auto');
+    if ((playersDead === true && this.gameState.level === 4) ||
+      (competitorsDead === true && this.gameState.level === 4) ||
+      (playersDead === true)) {
       this.gamePlay.boardEl.style.pointerEvents = 'none';
-
-      // pointer-events: none
-
-      // this.gamePlay.boardEl.addEventListener('click', function () { return false; })
-
-      // addEventListener('click', function () { return false; });)
-
-      // const updatedCompetitors = this.updateWinners(this.gameState.teamCompetitors);
-      // const generateCompetitors = this.gameState.amountParticipants - this.gameState.teamCompetitors.length;
-
-      // const teamPlayers = generateTeam(this.gameState.playerTypes, 1, this.gameState.amountParticipants);
-      // const teamCompetitors = generateTeam(this.gameState.competitorTypes, 1, generateCompetitors, updatedCompetitors);
-
-      // this.drawingPlayingField(teamPlayers, teamCompetitors);
     }
     if (competitorsDead === true) {
 
       this.gameState.level++;
       this.levels();
 
-      const updatedPlayers = this.updateWinners(this.gameState.teamPlayers);
+      let updatedPlayers = this.updateWinners(this.gameState.teamPlayers);
       const generatePlayers = this.gameState.amountParticipants - this.gameState.teamPlayers.length;
+
+      updatedPlayers = updatedPlayers.map((item) => {
+        const obj = Object.setPrototypeOf(item, Character.prototype);
+        return obj;
+      });
 
       const teamPlayers = generateTeam(this.gameState.playerTypes, 1, generatePlayers, updatedPlayers);
       const teamCompetitors = generateTeam(this.gameState.competitorTypes, 1, this.gameState.amountParticipants);
