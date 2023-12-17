@@ -2,7 +2,7 @@ import { generateTeam } from './generators';
 import { randomInitPositions } from './generators';
 import {
   diagonalRightLeftFirstPart, diagonalRightLeftSecondPart, diagonalLeftRightFirstPart,
-  diagonalLeftRightSecondPart, verticalMovementAccess, horizontalMovementAccess, availableAttack
+  diagonalLeftRightSecondPart, verticalMovementAccess, horizontalMovementAccess, availableAttack, initPositions
 } from './utils';
 
 import GameState from './GameState';
@@ -33,6 +33,7 @@ export default class GameController {
 
     this.addListeners();
   }
+
   levels() {
     switch (this.gameState.level) {
       case 1:
@@ -61,16 +62,16 @@ export default class GameController {
     this.gamePlay.addNewGameListener(this.onNewGameClick.bind(this));
     this.gamePlay.addSaveGameListener(this.onSaveGameClick.bind(this));
     this.gamePlay.addLoadGameListener(this.onLoadGameClick.bind(this));
-
-    const btn = document.querySelectorAll('.btn');
-    btn.forEach(el => el.addEventListener('mouseover', function () { el.style.cursor = 'pointer' }))
   }
+
   onNewGameClick() {
     this.init();
   }
+
   onSaveGameClick() {
     this.stateService.save(this.gameState);
   }
+
   onLoadGameClick() {
     const loadedState = this.stateService.load();
 
@@ -94,22 +95,40 @@ export default class GameController {
 
     this.addListeners();
   }
+
   onCellEnter(index) {
     this.gameState.enterIndex = index;
     this.gameState.enterCell = this.gamePlay.cells[this.gameState.enterIndex];
 
-    // отображение CellTooltip
+    const btn = document.querySelectorAll('.btn');
+    btn.forEach(el => el.addEventListener('mouseover', function () { el.style.cursor = 'pointer' }))
+
     if (this.gameState.enterCell.children[0]) {
+
+      // отображение CellTooltip
       this.gamePlay.showCellTooltip(this.showTooltipCharacter(index), index);
-      this.gamePlay.setCursor('pointer');
+
+      const isCompetitor = this.playerOrCompetitor(this.gameState.teamCompetitors, this.gameState.enterCell, this.gameState.enterIndex);
+      isCompetitor ? this.gamePlay.setCursor('auto') : this.gamePlay.setCursor('pointer');
     }
-    if (this.gameState.focusCharacter.current === true) {
+
+    if (this.gameState.focusChar.current === true) {
 
       // отображение возможной клетки для хода
-      this.displayOfAvailableMoves(index);
+      const availableMoves = this.getAllAvailableMoves(this.gameState.crtPosition, this.gameState.crtMove, this.gamePlay.boardSize);
+      availableMoves.forEach(el => {
+        if (el === index && !this.gamePlay.cells[index].children[0]) {
+          this.gamePlay.setCursor('pointer');
+          this.gamePlay.selectCell(index, 'green');
+        }
+      });
+
+      if (!availableMoves.includes(this.gameState.enterIndex)) {
+        this.gamePlay.setCursor('auto');
+      }
 
       // отображение возможной клетки для аттаки
-      const attack = availableAttack(this.gameState.currentIndex, this.gameState.currentAttackMove, this.gamePlay.boardSize);
+      const attack = availableAttack(this.gameState.crtIndex, this.gameState.crtAttack, this.gamePlay.boardSize);
 
       this.gameState.teamCompetitors.forEach(el => {
         if (el.position === index && attack.includes(index)) {
@@ -122,84 +141,89 @@ export default class GameController {
       });
     }
   }
+  showTooltipCharacter(index) {
+
+    const arr = [...this.gameState.teamPlayers, ...this.gameState.teamCompetitors];
+    const el = arr.find(el => el.position === index);
+    if (el) {
+      return `\u{1F396}${el.character.level} \u{2694}${el.character.attack} \u{1F6E1}${el.character.defence} \u{2764}${el.character.health}`;
+    }
+  }
+  // showTooltipCharacter(index) {
+
+  //   const arr = [...this.gameState.teamPlayers, ...this.gameState.teamCompetitors];
+  //   const el = arr.find(el => el.position === index);
+  //   if (el) {
+  //     return `\u{1F396}${el.character.level} \u{2694}${el.character.attack} \u{1F6E1}${el.character.defence} \u{2764}${el.character.health}`;
+  //   }
+  // }
+
   async onCellClick(index) {
     if (this.gameState.move === 'player') {
 
-      this.gameState.currentIndex = index;
+      this.gameState.crtIndex = index;
       this.setСlickСharacteristics();
 
-      if (this.gameState.typeCurrentIndex === 'character') {
+      if (this.gameState.crtTypeIndex === 'character') {
 
         // если нажали на одного и того же персонажа дважды - фокус убираем с него
-        if (this.gameState.currentCell.className.includes('selected-yellow')) {
-          this.gamePlay.deselectCell(this.gameState.currentIndex);
-          this.gameState.focusCharacter = {
-            'current': false,
-            'index': null,
-            'type': null,
-            'positionedCharacter': null,
-            'attackMove': null,
-            'cell': null
-          }
+        if (this.gameState.crtCell.className.includes('selected-yellow')) {
+          this.gamePlay.deselectCell(this.gameState.crtIndex);
+          this.resetFocusCharacter();
 
-          this.setCurrentCharacteristics(null, null, null, null, null);
+          this.setCurrentCharacteristics(null, null, null, null, null, null, null);
           return;
         }
         this.gamePlay.cells.forEach((cell, i) => this.gamePlay.deselectCell(i));
-        this.gamePlay.selectCell(this.gameState.currentIndex, 'yellow');
+        this.gamePlay.selectCell(this.gameState.crtIndex, 'yellow');
 
-        this.gameState.focusCharacter = {
+        this.gameState.focusChar = {
           'current': true,
-          'index': this.gameState.currentIndex,
-          'type': this.gameState.typeCurrentIndex,
-          'positionedCharacter': this.gameState.currentCharacterPosition,
-          'attackMove': this.gameState.currentAttackMove,
-          'cell': this.gameState.currentCell
+          'index': this.gameState.crtIndex,
+          'type': this.gameState.crtTypeIndex,
+          'char': this.gameState.crtCharacter,
+          'position': this.gameState.crtPosition,
+          'attack': this.gameState.crtAttack,
+          'move': this.gameState.crtMove,
+          'cell': this.gameState.crtCell
         }
       }
 
-      if (this.gameState.typeCurrentIndex === 'empty') {
+      if (this.gameState.crtTypeIndex === 'empty') {
 
-        if (this.gameState.focusCharacter.current === true && this.gameState.currentCell.className.includes('selected-green')) {
+        if (this.gameState.focusChar.current === true && this.gameState.crtCell.className.includes('selected-green')) {
 
-          this.gameState.focusCharacter.index = this.gameState.currentIndex;
-          this.gameState.focusCharacter.positionedCharacter.position = this.gameState.currentIndex;
-          this.gameState.focusCharacter.cell = this.gameState.currentCell;
+          this.gameState.focusChar.index = this.gameState.crtIndex;
+          this.gameState.focusChar.position = this.gameState.crtIndex;
+          this.gameState.focusChar.cell = this.gameState.crtCell;
 
-          this.redrawingMove(this.gameState.focusCharacter.index, this.gameState.currentIndex, this.gameState.teamPlayers);
+          this.changeCharacterPosition(this.gameState.focusChar.char, this.gameState.crtIndex, this.gameState.teamPlayers);
           this.gamePlay.redrawPositions([...this.gameState.teamPlayers, ...this.gameState.teamCompetitors]);
 
           this.gamePlay.cells.forEach((cell, i) => this.gamePlay.deselectCell(i));
-          this.gamePlay.selectCell(this.gameState.currentIndex, 'yellow');
+          this.gamePlay.selectCell(this.gameState.crtIndex, 'yellow');
 
-          this.setCurrentCharacteristics(this.gameState.currentIndex, this.gameState.focusCharacter.type,
-            this.gameState.focusCharacter.positionedCharacter, this.gameState.focusCharacter.attackMove, this.gameState.focusCharacter.cell)
+          this.setCurrentCharacteristics(this.gameState.crtIndex, this.gameState.focusChar.type,
+            this.gameState.focusChar.char, this.gameState.focusChar.position, this.gameState.focusChar.attack,
+            this.gameState.focusChar.move, this.gameState.focusChar.cell);
+
           this.gameState.move = 'competitor'
           this.moveCompetitor();
 
         } else {
           this.gamePlay.cells.forEach((cell, i) => this.gamePlay.deselectCell(i));
-          this.setCurrentCharacteristics(null, null, null, null, null);
-          this.gameState.focusCharacter = {
-            'current': false,
-            'index': null,
-            'type': null,
-            'positionedCharacter': null,
-            'attackMove': null,
-            'cell': null
-          }
+          this.setCurrentCharacteristics(null, null, null, null, null, null, null);
+          this.resetFocusCharacter();
         }
       }
-      if (this.gameState.typeCurrentIndex === 'competitor') {
+      if (this.gameState.crtTypeIndex === 'competitor') {
 
-        if (this.gameState.focusCharacter.current === true) {
+        if (this.gameState.focusChar.current === true) {
 
-          console.log(this.gameState.focusCharacter.attackMove)
-          
-          const attack = availableAttack(this.gameState.focusCharacter.index, this.gameState.focusCharacter.attackMove, this.gamePlay.boardSize);
-          if (attack.includes(this.gameState.currentIndex)) {
+          const attack = availableAttack(this.gameState.focusChar.index, this.gameState.focusChar.attack, this.gamePlay.boardSize);
+          if (attack.includes(this.gameState.crtIndex)) {
             try {
-              await this.attackCalculation(this.gameState.focusCharacter.positionedCharacter.character, this.gameState.currentCharacterPosition.character, this.gameState.currentIndex);
+              await this.attackCalculation(this.gameState.focusChar.char, this.gameState.crtCharacter, this.gameState.crtIndex);
             } catch (error) { }
 
             if (this.checkNextLevel() === 'player') {
@@ -207,30 +231,24 @@ export default class GameController {
             } else {
               this.gameState.move = 'competitor';
             }
-
             this.gamePlay.redrawPositions([...this.gameState.teamPlayers, ...this.gameState.teamCompetitors]);
           } else {
             GamePlay.showError('Невозможно атаковать данную клетку');
           }
-          this.setCurrentCharacteristics(this.gameState.focusCharacter.index, this.gameState.focusCharacter.type,
-            this.gameState.focusCharacter.positionedCharacter, this.gameState.focusCharacter.attackMove, this.gameState.focusCharacter.cell);
+          this.setCurrentCharacteristics(this.gameState.focusChar.index, this.gameState.focusChar.type,
+            this.gameState.focusChar.char, this.gameState.focusChar.position, this.gameState.focusChar.attack,
+            this.gameState.focusChar.move, this.gameState.focusChar.cell);
 
           this.moveCompetitor();
 
         } else {
-          this.gameState.focusCharacter = {
-            'current': false,
-            'index': null,
-            'type': null,
-            'positionedCharacter': null,
-            'attackMove': null,
-            'cell': null
-          }
+          this.resetFocusCharacter();
           GamePlay.showError('Невозможно выбрать данного игрока');
         }
       }
     }
   }
+
   onCellLeave(index) {
     if (this.gamePlay.cells[index].children[0]) {
       this.gamePlay.hideCellTooltip(index);
@@ -238,56 +256,54 @@ export default class GameController {
     } else {
       this.gamePlay.deselectCell(index);
     }
-    if (this.gameState.typeCurrentIndex === 'character') {
+    if (this.gameState.crtTypeIndex === 'character') {
       const el = this.gameState.teamCompetitors.find(el => el.position === index);
       if (el) {
         this.gamePlay.deselectCell(index);
         this.gamePlay.setCursor('auto');
       }
     }
-    if (this.gameState.typeCurrentIndex === 'competitor') {
+    if (this.gameState.crtTypeIndex === 'competitor') {
       this.gamePlay.deselectCell(index);
     }
   }
 
-  initPositions(column1, column2) {
-    const arr = [];
-    const board = this.gamePlay.boardSize;
-    for (let i = 0; i < ((board * board) - 1); i++) {
-      if (i % board === column1 || i % board === column2) {
-        arr.push(i);
-      }
-    }
-    return arr;
-  }
-  setCurrentCharacteristics(index, type, characterPosition, attackMove, cell) {
-    this.gameState.currentIndex = index;
-    this.gameState.typeCurrentIndex = type;
-    this.gameState.currentCharacterPosition = characterPosition;
-    this.gameState.currentAttackMove = attackMove;
-    this.gameState.currentCell = cell;
+  setCurrentCharacteristics(index, type, char, position, attack, move, cell) {
+    this.gameState.crtIndex = index;
+    this.gameState.crtTypeIndex = type;
+    this.gameState.crtChar = char;
+    this.gameState.crtPosition = position;
+    this.gameState.crtAttack = attack;
+    this.gameState.crtMove = move;
+    this.gameState.crtCell = cell;
   }
 
-  showTooltipCharacter(index) {
-    console.log(this.gameState.teamPlayers)
-    const arr = [...this.gameState.teamPlayers, ...this.gameState.teamCompetitors];
-    const el = arr.find(el => el.position === index);
-    if (el) {
-      return `\u{1F396}${el.character.level} \u{2694}${el.character.attack} \u{1F6E1}${el.character.defence} \u{2764}${el.character.health}`;
+  resetFocusCharacter() {
+    this.gameState.focusChar = {
+      'current': false,
+      'index': null,
+      'type': null,
+      'char': null,
+      'position': null,
+      'attack': null,
+      'move': null,
+      'cell': null
     }
   }
 
-  redrawingMove(character, newIndex, team) {
-    team.find(el => { if (el === character) { el.position = newIndex } });
+  changeCharacterPosition(character, newIndex, team) {
+    team.find(el => { if (el.character === character) { el.position = newIndex } });
   }
 
   async moveCompetitor() {
 
-    if (this.gameState.move === 'competitor') {
+    if (this.gameState.move === 'competitor' && this.gameState.teamCompetitors.length != 0) {
 
-      const randomCompetitor = this.gameState.teamCompetitors[Math.floor(Math.random() * this.gameState.teamCompetitors.length)];
-      const moveAttackCompetitor = this.gameState.moveRangeAttack.find(el => el.name === randomCompetitor.character.type);
-      const attack = availableAttack(randomCompetitor.position, moveAttackCompetitor, this.gamePlay.boardSize);
+      const positionedCompetitor = this.gameState.teamCompetitors[Math.floor(Math.random() * this.gameState.teamCompetitors.length)];
+
+      const attackCompetitor = this.getCellAttack(positionedCompetitor.character);
+
+      const attack = availableAttack(positionedCompetitor.position, attackCompetitor, this.gamePlay.boardSize);
 
       const players = this.gameState.teamPlayers.filter(el => attack.includes(el.position));
 
@@ -296,22 +312,24 @@ export default class GameController {
         const randomTarget = players[Math.floor(Math.random() * players.length)];
 
         try {
-          await this.attackCalculation(randomCompetitor.character, randomTarget.character, randomTarget.position);
+          await this.attackCalculation(positionedCompetitor.character, randomTarget.character, randomTarget.position);
         } catch (error) { }
 
         this.checkNextLevel();
 
         this.gamePlay.redrawPositions([...this.gameState.teamPlayers, ...this.gameState.teamCompetitors]);
       } else {
-        let array = this.getAllMoves(this.gameState.currentCharacterPosition.position, this.gameState.currentAttackMove.move, this.gamePlay.boardSize);
+        let array = this.getAllAvailableMoves(this.gameState.crtPosition, this.gameState.crtMove, this.gamePlay.boardSize);
         array = array.filter(el => !this.gamePlay.cells[el].children[0]);
         const randomMove = array[Math.floor(Math.random() * array.length)];
-        this.redrawingMove(randomCompetitor, randomMove, this.gameState.teamCompetitors);
+
+        this.changeCharacterPosition(positionedCompetitor.character, randomMove, this.gameState.teamCompetitors);
         this.gamePlay.redrawPositions([...this.gameState.teamPlayers, ...this.gameState.teamCompetitors]);
       }
       this.gameState.move = 'player';
     }
   }
+
   async attackCalculation(attacker, target, targetIndex) {
     const damage = Math.round(Math.max(attacker.attack - target.defence, attacker.attack * 0.1));
     try {
@@ -323,30 +341,11 @@ export default class GameController {
     const isPlayerDead = this.isCharacterDead(target, this.gameState.teamPlayers, targetIndex);
     const isCompetitorDead = this.isCharacterDead(target, this.gameState.teamCompetitors, targetIndex);
 
-    if (isPlayerDead && this.gameState.focusCharacter.current === true &&
-      this.gameState.focusCharacter.positionedCharacter.character === target) {
-      this.gameState.focusCharacter = {
-        'current': false,
-        'index': null,
-        'type': null,
-        'positionedCharacter': null,
-        'attackMove': null,
-        'cell': null
-      }
+    if (isPlayerDead && this.gameState.focusChar.current === true &&
+      this.gameState.focusChar.char === target) {
+      this.resetFocusCharacter();
       this.gamePlay.cells.forEach((cell, i) => this.gamePlay.deselectCell(i));
     }
-  }
-  getAllMoves(position, move, boardSize) {
-
-    let array =
-      [...horizontalMovementAccess(position, boardSize, move),
-      ...verticalMovementAccess(position, boardSize, move),
-      ...diagonalRightLeftFirstPart(position, boardSize, move),
-      ...diagonalRightLeftSecondPart(position, boardSize, move),
-      ...diagonalLeftRightFirstPart(position, boardSize, move),
-      ...diagonalLeftRightSecondPart(position, boardSize, move)];
-
-    return array;
   }
 
   updateWinners(team) {
@@ -374,71 +373,62 @@ export default class GameController {
 
   drawingPlayingField(teamPlayers, teamCompetitors) {
 
-    this.gameState.initPlayersPositions = this.initPositions(0, 1);
-    this.gameState.initCompetitorsPositions = this.initPositions((this.gamePlay.boardSize - 1), (this.gamePlay.boardSize - 2));
+    this.gameState.initPlayersPositions = initPositions(0, 1, this.gamePlay.boardSize);
+    this.gameState.initCompetitorsPositions = initPositions((this.gamePlay.boardSize - 1), (this.gamePlay.boardSize - 2), this.gamePlay.boardSize);
 
     this.gameState.teamPlayers = randomInitPositions(teamPlayers, this.gameState.initPlayersPositions);
     this.gameState.teamCompetitors = randomInitPositions(teamCompetitors, this.gameState.initCompetitorsPositions);
 
     this.gamePlay.redrawPositions([...this.gameState.teamPlayers, ...this.gameState.teamCompetitors]);
   }
-  displayOfAvailableMoves(index) {
-    const position = this.gameState.currentCharacterPosition.position;
-    const boardSize = this.gamePlay.boardSize;
-    const move = this.gameState.currentAttackMove.move;
 
-    const horizontal = this.selectNextMove(horizontalMovementAccess(position, boardSize, move), index);
-    const vertical = this.selectNextMove(verticalMovementAccess(position, boardSize, move), index);
-    const diagonal1 = this.selectNextMove(diagonalRightLeftFirstPart(position, boardSize, move), index);
-    const diagonal2 = this.selectNextMove(diagonalRightLeftSecondPart(position, boardSize, move), index);
-    const diagonal3 = this.selectNextMove(diagonalLeftRightFirstPart(position, boardSize, move), index);
-    const diagonal4 = this.selectNextMove(diagonalLeftRightSecondPart(position, boardSize, move), index);
-
-    const arr = [horizontal, vertical, diagonal1, diagonal2, diagonal3, diagonal4];
-
-    if (arr.includes(index)) { return index };
-  }
-  selectNextMove(accessMove, index) {
-    accessMove.forEach(el => {
-      if (el === index && !this.gamePlay.cells[index].children[0]) {
-        this.gamePlay.setCursor('pointer');
-        this.gamePlay.selectCell(index, 'green');
-        return index;
-      }
-    });
-  }
   setСlickСharacteristics() {
-    this.gameState.currentCell = this.gamePlay.cells[this.gameState.currentIndex];
+    this.gameState.crtCell = this.gamePlay.cells[this.gameState.crtIndex];
 
     // если клик по пустому полю
-    if (!this.gameState.currentCell.children[0]) {
-      this.gameState.typeCurrentIndex = 'empty';
-      this.gameState.currentCharacterPosition = null;
-      this.gameState.currentAttackMove = null;
+    if (!this.gameState.crtCell.children[0]) {
+      this.gameState.crtTypeIndex = 'empty';
+      this.gameState.crtCharacter = null;
+      this.gameState.crtPosition = null;
+      this.gameState.crtAttack = null;
+      this.gameState.crtMove = null;
       return;
     }
     // Если клик не по пустому полю: определяем из чьей команды игрок
-    const ourPlayer = this.playerOrCompetitor(this.gameState.teamPlayers, this.gameState.currentCell, this.gameState.currentIndex);
-    const competitor = this.playerOrCompetitor(this.gameState.teamCompetitors, this.gameState.currentCell, this.gameState.currentIndex);
+    const ourPlayer = this.playerOrCompetitor(this.gameState.teamPlayers, this.gameState.crtCell, this.gameState.crtIndex);
+    const competitor = this.playerOrCompetitor(this.gameState.teamCompetitors, this.gameState.crtCell, this.gameState.crtIndex);
 
     if (ourPlayer) {
-      this.gameState.typeCurrentIndex = 'character';
-      this.gameState.currentCharacterPosition = ourPlayer;
+      this.gameState.crtTypeIndex = 'character';
+      this.gameState.crtCharacter = ourPlayer.character;
+      this.gameState.crtPosition = ourPlayer.position;
     } else {
-      this.gameState.typeCurrentIndex = 'competitor';
-      this.gameState.currentCharacterPosition = competitor;
+      this.gameState.crtTypeIndex = 'competitor';
+      this.gameState.crtCharacter = competitor.character;
+      this.gameState.crtPosition = competitor.position;
     }
-    this.gameState.currentAttackMove = this.getMoveAttack(this.gameState.currentCharacterPosition);
+    this.gameState.crtAttack = this.getCellAttack(this.gameState.crtCharacter);
+    this.gameState.crtMove = this.getCellMove(this.gameState.crtCharacter);
   }
-  getMoveAttack(positionedCharacter) {
-    if (positionedCharacter) {
-      return this.gameState.moveRangeAttack.find(el => el.name === positionedCharacter.character.type);
+
+  getCellMove(character) {
+    if (character) {
+      const charMoveAttack = this.gameState.moveRangeAttack.find(el => el.name === character.type);
+      return charMoveAttack.move;
+    }
+    return null;
+  }
+
+  getCellAttack(character) {
+    if (character) {
+      const charMoveAttack = this.gameState.moveRangeAttack.find(el => el.name === character.type);
+      return charMoveAttack.attack;
     }
     return null;
   }
 
   checkNextLevel() {
-    // Проверка остались ли игроки
+    // Проверка: остались ли игроки
     const playersDead = this.isTeamDead(this.gameState.teamPlayers);
     const competitorsDead = this.isTeamDead(this.gameState.teamCompetitors);
 
@@ -446,11 +436,13 @@ export default class GameController {
       (competitorsDead === true && this.gameState.level === 4) ||
       (playersDead === true)) {
       this.gamePlay.boardEl.style.pointerEvents = 'none';
+      return;
     }
     if (competitorsDead === true) {
 
       this.gameState.level++;
       this.levels();
+      this.resetFocusCharacter();
 
       let updatedPlayers = this.updateWinners(this.gameState.teamPlayers);
       const generatePlayers = this.gameState.amountParticipants - this.gameState.teamPlayers.length;
@@ -468,6 +460,7 @@ export default class GameController {
     }
 
   }
+
   isCharacterDead(target, team, targetIndex) {
     let result = false;
     if (target.health <= 0) {
@@ -481,13 +474,24 @@ export default class GameController {
     }
     return result;
   }
+
   isTeamDead(team) {
     if (team.length === 0) {
       return true;
     }
     return false;
   }
+
   playerOrCompetitor(team, cell, index) {
     return team.find(el => cell.children[0].className.includes(el.character.type) && el.position === index);
+  }
+
+  getAllAvailableMoves(position, move, boardSize) {
+    let array =
+      [...horizontalMovementAccess(position, boardSize, move), ...verticalMovementAccess(position, boardSize, move),
+      ...diagonalRightLeftFirstPart(position, boardSize, move), ...diagonalRightLeftSecondPart(position, boardSize, move),
+      ...diagonalLeftRightFirstPart(position, boardSize, move), ...diagonalLeftRightSecondPart(position, boardSize, move)];
+
+    return array;
   }
 }

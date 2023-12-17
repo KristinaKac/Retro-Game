@@ -5,12 +5,12 @@ import { Vampire } from './characters/Vampire';
 import { Undead } from './characters/Undead';
 import { Daemon } from './characters/Daemon';
 
-
-
-
 export default class GameState {
 
   constructor() {
+
+    // crt - current
+    // char - character
 
     this.move = 'player';
 
@@ -20,15 +20,24 @@ export default class GameState {
     this.enterIndex = null;
     this.enterCell = null;
 
-    this.focusCharacter = false;
+    this.focusChar = {
+      'current': false,
+      'index': null,
+      'type': null,
+      'char': null,
+      'position': null,
+      'attack': null,
+      'move': null,
+      'cell': null
+    }
 
-    this.currentIndex = null;
-    this.typeCurrentIndex = null;
-    this.currentCharacterPosition = null;
-    this.currentAttackMove = null;
-    this.currentCell = null;
-
-    this.r = null;
+    this.crtIndex = null;
+    this.crtTypeIndex = null;
+    this.crtCell = null;
+    this.crtPosition = null;
+    this.crtCharacter = null;
+    this.crtAttack = null;
+    this.crtMove = null;
 
     this.teamPlayers = [];
     this.teamCompetitors = [];
@@ -37,12 +46,12 @@ export default class GameState {
     this.competitorTypes = [Vampire, Undead, Daemon];
 
     this.moveRangeAttack = [
-      { name: 'bowman', type: 'player', move: 2, attackRange: 2 },
-      { name: 'swordsman', type: 'player', move: 4, attackRange: 1 },
-      { name: 'magician', type: 'player', move: 1, attackRange: 4 },
-      { name: 'vampire', type: 'competitor', move: 2, attackRange: 2 },
-      { name: 'undead', type: 'competitor', move: 4, attackRange: 1 },
-      { name: 'daemon', type: 'competitor', move: 1, attackRange: 4 }
+      { name: 'bowman', type: 'player', move: 2, attack: 2 },
+      { name: 'swordsman', type: 'player', move: 4, attack: 1 },
+      { name: 'magician', type: 'player', move: 1, attack: 4 },
+      { name: 'vampire', type: 'competitor', move: 2, attack: 2 },
+      { name: 'undead', type: 'competitor', move: 4, attack: 1 },
+      { name: 'daemon', type: 'competitor', move: 1, attack: 4 }
     ];
 
     this.initPlayersPositions = null;

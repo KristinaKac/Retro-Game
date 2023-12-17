@@ -1,10 +1,6 @@
 import GameController from "../GameController";
 import GamePlay from "../GamePlay";
 import GameStateService from "../GameStateService";
-import { Magician } from "../characters/Magician";
-import PositionedCharacter from "../PositionedCharacter";
-import GameState from "../GameState";
-
 
 test.each([
     [0, 3, 8, 9],

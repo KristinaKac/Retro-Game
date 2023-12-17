@@ -59,6 +59,16 @@ export function calcHealthLevel(health) {
   return 'high';
 }
 
+export function initPositions(column1, column2, board) {
+  const arr = [];
+  for (let i = 0; i < ((board * board) - 1); i++) {
+    if (i % board === column1 || i % board === column2) {
+      arr.push(i);
+    }
+  }
+  return arr;
+}
+
 export function diagonalRightLeftFirstPart(position, boardSize, move) {
   let diagonalRightLeftMove = [];
 
@@ -192,9 +202,10 @@ export function getAccessMove(array, move, position) {
   }
   return moveArr;
 }
+
 export function getAttackBorder(attack, arr, acc, index) {
   let move = index;
-  for (let i = 1; i <= attack.attackRange; i++) {
+  for (let i = 1; i <= attack; i++) {
     if (arr.includes(move)) {
       break;
     }
@@ -202,6 +213,7 @@ export function getAttackBorder(attack, arr, acc, index) {
   }
   return move;
 }
+
 export function availableAttack(index, attack, board) {
 
   const top = []; const left = []; const right = []; const bottom = [];
