@@ -1,5 +1,5 @@
-import Team from "./Team";
-import PositionedCharacter from "./PositionedCharacter";
+import Team from './Team';
+import PositionedCharacter from './PositionedCharacter';
 
 /**
  * Формирует экземпляр персонажа из массива allowedTypes со
@@ -14,8 +14,8 @@ import PositionedCharacter from "./PositionedCharacter";
 export function* characterGenerator(allowedTypes, maxLevel) {
   while (true) {
     const randomCharacter = allowedTypes[Math.floor(Math.random() * allowedTypes.length)];
-    let level = Math.ceil(Math.random() * maxLevel);
-    let character = new randomCharacter(level);
+    const level = Math.ceil(Math.random() * maxLevel);
+    const character = new randomCharacter(level);
     yield character;
   }
 }
@@ -35,8 +35,8 @@ export function generateTeam(allowedTypes, maxLevel, characterCount, addArr) {
   for (let i = 0; i < characterCount; i++) {
     arr.push(playerGenerator.next().value);
   }
-  if(addArr){
-    addArr.forEach(el => {
+  if (addArr) {
+    addArr.forEach((el) => {
       arr.push(el);
     });
   }
@@ -44,13 +44,13 @@ export function generateTeam(allowedTypes, maxLevel, characterCount, addArr) {
 }
 
 export function randomInitPositions(team, initPositions) {
-  let positions = new Set();
+  const positions = new Set();
   const teamPositions = [];
 
   while (positions.size < team.characters.length) {
     positions.add(initPositions[Math.floor(Math.random() * initPositions.length)]);
   }
-  let arr = Array.from(positions);
+  const arr = Array.from(positions);
   for (let i = 0; i < team.characters.length; i++) {
     teamPositions.push(new PositionedCharacter(team.characters[i], arr[i]));
   }

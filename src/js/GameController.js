@@ -1,8 +1,8 @@
-import { generateTeam } from './generators';
-import { randomInitPositions } from './generators';
+import { generateTeam, randomInitPositions } from './generators';
+
 import {
   diagonalRightLeftFirstPart, diagonalRightLeftSecondPart, diagonalLeftRightFirstPart,
-  diagonalLeftRightSecondPart, verticalMovementAccess, horizontalMovementAccess, availableAttack, initPositions
+  diagonalLeftRightSecondPart, verticalMovementAccess, horizontalMovementAccess, availableAttack, initPositions,
 } from './utils';
 
 import GameState from './GameState';
@@ -17,7 +17,6 @@ export default class GameController {
   }
 
   init() {
-
     this.gameState = new GameState();
 
     this.gamePlay.cellClickListeners = [];
@@ -101,10 +100,9 @@ export default class GameController {
     this.gameState.enterCell = this.gamePlay.cells[this.gameState.enterIndex];
 
     const btn = document.querySelectorAll('.btn');
-    btn.forEach(el => el.addEventListener('mouseover', function () { el.style.cursor = 'pointer' }))
+    btn.forEach((el) => el.addEventListener('mouseover', () => { el.style.cursor = 'pointer'; }));
 
     if (this.gameState.enterCell.children[0]) {
-
       // отображение CellTooltip
       this.gamePlay.showCellTooltip(this.showTooltipCharacter(index), index);
 
@@ -113,10 +111,9 @@ export default class GameController {
     }
 
     if (this.gameState.focusChar.current === true) {
-
       // отображение возможной клетки для хода
       const availableMoves = this.getAllAvailableMoves(this.gameState.crtPosition, this.gameState.crtMove, this.gamePlay.boardSize);
-      availableMoves.forEach(el => {
+      availableMoves.forEach((el) => {
         if (el === index && !this.gamePlay.cells[index].children[0]) {
           this.gamePlay.setCursor('pointer');
           this.gamePlay.selectCell(index, 'green');
@@ -130,7 +127,7 @@ export default class GameController {
       // отображение возможной клетки для аттаки
       const attack = availableAttack(this.gameState.crtIndex, this.gameState.crtAttack, this.gamePlay.boardSize);
 
-      this.gameState.teamCompetitors.forEach(el => {
+      this.gameState.teamCompetitors.forEach((el) => {
         if (el.position === index && attack.includes(index)) {
           this.gamePlay.selectCell(index, 'red');
           this.gamePlay.setCursor('crosshair');
@@ -141,31 +138,21 @@ export default class GameController {
       });
     }
   }
-  showTooltipCharacter(index) {
 
+  showTooltipCharacter(index) {
     const arr = [...this.gameState.teamPlayers, ...this.gameState.teamCompetitors];
-    const el = arr.find(el => el.position === index);
+    const el = arr.find((el) => el.position === index);
     if (el) {
       return `\u{1F396}${el.character.level} \u{2694}${el.character.attack} \u{1F6E1}${el.character.defence} \u{2764}${el.character.health}`;
     }
   }
-  // showTooltipCharacter(index) {
-
-  //   const arr = [...this.gameState.teamPlayers, ...this.gameState.teamCompetitors];
-  //   const el = arr.find(el => el.position === index);
-  //   if (el) {
-  //     return `\u{1F396}${el.character.level} \u{2694}${el.character.attack} \u{1F6E1}${el.character.defence} \u{2764}${el.character.health}`;
-  //   }
-  // }
 
   async onCellClick(index) {
     if (this.gameState.move === 'player') {
-
       this.gameState.crtIndex = index;
       this.setСlickСharacteristics();
 
       if (this.gameState.crtTypeIndex === 'character') {
-
         // если нажали на одного и того же персонажа дважды - фокус убираем с него
         if (this.gameState.crtCell.className.includes('selected-yellow')) {
           this.gamePlay.deselectCell(this.gameState.crtIndex);
@@ -178,21 +165,19 @@ export default class GameController {
         this.gamePlay.selectCell(this.gameState.crtIndex, 'yellow');
 
         this.gameState.focusChar = {
-          'current': true,
-          'index': this.gameState.crtIndex,
-          'type': this.gameState.crtTypeIndex,
-          'char': this.gameState.crtCharacter,
-          'position': this.gameState.crtPosition,
-          'attack': this.gameState.crtAttack,
-          'move': this.gameState.crtMove,
-          'cell': this.gameState.crtCell
-        }
+          current: true,
+          index: this.gameState.crtIndex,
+          type: this.gameState.crtTypeIndex,
+          char: this.gameState.crtCharacter,
+          position: this.gameState.crtPosition,
+          attack: this.gameState.crtAttack,
+          move: this.gameState.crtMove,
+          cell: this.gameState.crtCell,
+        };
       }
 
       if (this.gameState.crtTypeIndex === 'empty') {
-
         if (this.gameState.focusChar.current === true && this.gameState.crtCell.className.includes('selected-green')) {
-
           this.gameState.focusChar.index = this.gameState.crtIndex;
           this.gameState.focusChar.position = this.gameState.crtIndex;
           this.gameState.focusChar.cell = this.gameState.crtCell;
@@ -203,13 +188,18 @@ export default class GameController {
           this.gamePlay.cells.forEach((cell, i) => this.gamePlay.deselectCell(i));
           this.gamePlay.selectCell(this.gameState.crtIndex, 'yellow');
 
-          this.setCurrentCharacteristics(this.gameState.crtIndex, this.gameState.focusChar.type,
-            this.gameState.focusChar.char, this.gameState.focusChar.position, this.gameState.focusChar.attack,
-            this.gameState.focusChar.move, this.gameState.focusChar.cell);
+          this.setCurrentCharacteristics(
+            this.gameState.crtIndex,
+            this.gameState.focusChar.type,
+            this.gameState.focusChar.char,
+            this.gameState.focusChar.position,
+            this.gameState.focusChar.attack,
+            this.gameState.focusChar.move,
+            this.gameState.focusChar.cell,
+          );
 
-          this.gameState.move = 'competitor'
+          this.gameState.move = 'competitor';
           this.moveCompetitor();
-
         } else {
           this.gamePlay.cells.forEach((cell, i) => this.gamePlay.deselectCell(i));
           this.setCurrentCharacteristics(null, null, null, null, null, null, null);
@@ -217,9 +207,7 @@ export default class GameController {
         }
       }
       if (this.gameState.crtTypeIndex === 'competitor') {
-
         if (this.gameState.focusChar.current === true) {
-
           const attack = availableAttack(this.gameState.focusChar.index, this.gameState.focusChar.attack, this.gamePlay.boardSize);
           if (attack.includes(this.gameState.crtIndex)) {
             try {
@@ -235,12 +223,17 @@ export default class GameController {
           } else {
             GamePlay.showError('Невозможно атаковать данную клетку');
           }
-          this.setCurrentCharacteristics(this.gameState.focusChar.index, this.gameState.focusChar.type,
-            this.gameState.focusChar.char, this.gameState.focusChar.position, this.gameState.focusChar.attack,
-            this.gameState.focusChar.move, this.gameState.focusChar.cell);
+          this.setCurrentCharacteristics(
+            this.gameState.focusChar.index,
+            this.gameState.focusChar.type,
+            this.gameState.focusChar.char,
+            this.gameState.focusChar.position,
+            this.gameState.focusChar.attack,
+            this.gameState.focusChar.move,
+            this.gameState.focusChar.cell,
+          );
 
           this.moveCompetitor();
-
         } else {
           this.resetFocusCharacter();
           GamePlay.showError('Невозможно выбрать данного игрока');
@@ -257,7 +250,7 @@ export default class GameController {
       this.gamePlay.deselectCell(index);
     }
     if (this.gameState.crtTypeIndex === 'character') {
-      const el = this.gameState.teamCompetitors.find(el => el.position === index);
+      const el = this.gameState.teamCompetitors.find((el) => el.position === index);
       if (el) {
         this.gamePlay.deselectCell(index);
         this.gamePlay.setCursor('auto');
@@ -280,35 +273,32 @@ export default class GameController {
 
   resetFocusCharacter() {
     this.gameState.focusChar = {
-      'current': false,
-      'index': null,
-      'type': null,
-      'char': null,
-      'position': null,
-      'attack': null,
-      'move': null,
-      'cell': null
-    }
+      current: false,
+      index: null,
+      type: null,
+      char: null,
+      position: null,
+      attack: null,
+      move: null,
+      cell: null,
+    };
   }
 
   changeCharacterPosition(character, newIndex, team) {
-    team.find(el => { if (el.character === character) { el.position = newIndex } });
+    team.find((el) => { if (el.character === character) { el.position = newIndex; } });
   }
 
   async moveCompetitor() {
-
     if (this.gameState.move === 'competitor' && this.gameState.teamCompetitors.length != 0) {
-
       const positionedCompetitor = this.gameState.teamCompetitors[Math.floor(Math.random() * this.gameState.teamCompetitors.length)];
 
       const attackCompetitor = this.getCellAttack(positionedCompetitor.character);
 
       const attack = availableAttack(positionedCompetitor.position, attackCompetitor, this.gamePlay.boardSize);
 
-      const players = this.gameState.teamPlayers.filter(el => attack.includes(el.position));
+      const players = this.gameState.teamPlayers.filter((el) => attack.includes(el.position));
 
       if (players.length !== 0) {
-
         const randomTarget = players[Math.floor(Math.random() * players.length)];
 
         try {
@@ -320,7 +310,7 @@ export default class GameController {
         this.gamePlay.redrawPositions([...this.gameState.teamPlayers, ...this.gameState.teamCompetitors]);
       } else {
         let array = this.getAllAvailableMoves(this.gameState.crtPosition, this.gameState.crtMove, this.gamePlay.boardSize);
-        array = array.filter(el => !this.gamePlay.cells[el].children[0]);
+        array = array.filter((el) => !this.gamePlay.cells[el].children[0]);
         const randomMove = array[Math.floor(Math.random() * array.length)];
 
         this.changeCharacterPosition(positionedCompetitor.character, randomMove, this.gameState.teamCompetitors);
@@ -335,23 +325,23 @@ export default class GameController {
     try {
       await this.gamePlay.showDamage(targetIndex, damage);
     } catch (error) { }
-    target.health = target.health - damage;
+    target.health -= damage;
 
     // проверка мертв ли персонаж
     const isPlayerDead = this.isCharacterDead(target, this.gameState.teamPlayers, targetIndex);
     const isCompetitorDead = this.isCharacterDead(target, this.gameState.teamCompetitors, targetIndex);
 
-    if (isPlayerDead && this.gameState.focusChar.current === true &&
-      this.gameState.focusChar.char === target) {
+    if (isPlayerDead && this.gameState.focusChar.current === true
+      && this.gameState.focusChar.char === target) {
       this.resetFocusCharacter();
       this.gamePlay.cells.forEach((cell, i) => this.gamePlay.deselectCell(i));
     }
   }
 
   updateWinners(team) {
-    let updateTeam = [];
+    const updateTeam = [];
 
-    team.forEach(el => {
+    team.forEach((el) => {
       if (el.character.level > 4) {
         updateTeam.push(el.character);
         return;
@@ -368,11 +358,10 @@ export default class GameController {
 
       updateTeam.push(el.character);
     });
-    return updateTeam
+    return updateTeam;
   }
 
   drawingPlayingField(teamPlayers, teamCompetitors) {
-
     this.gameState.initPlayersPositions = initPositions(0, 1, this.gamePlay.boardSize);
     this.gameState.initCompetitorsPositions = initPositions((this.gamePlay.boardSize - 1), (this.gamePlay.boardSize - 2), this.gamePlay.boardSize);
 
@@ -413,7 +402,7 @@ export default class GameController {
 
   getCellMove(character) {
     if (character) {
-      const charMoveAttack = this.gameState.moveRangeAttack.find(el => el.name === character.type);
+      const charMoveAttack = this.gameState.moveRangeAttack.find((el) => el.name === character.type);
       return charMoveAttack.move;
     }
     return null;
@@ -421,7 +410,7 @@ export default class GameController {
 
   getCellAttack(character) {
     if (character) {
-      const charMoveAttack = this.gameState.moveRangeAttack.find(el => el.name === character.type);
+      const charMoveAttack = this.gameState.moveRangeAttack.find((el) => el.name === character.type);
       return charMoveAttack.attack;
     }
     return null;
@@ -432,14 +421,13 @@ export default class GameController {
     const playersDead = this.isTeamDead(this.gameState.teamPlayers);
     const competitorsDead = this.isTeamDead(this.gameState.teamCompetitors);
 
-    if ((playersDead === true && this.gameState.level === 4) ||
-      (competitorsDead === true && this.gameState.level === 4) ||
-      (playersDead === true)) {
+    if ((playersDead === true && this.gameState.level === 4)
+      || (competitorsDead === true && this.gameState.level === 4)
+      || (playersDead === true)) {
       this.gamePlay.boardEl.style.pointerEvents = 'none';
       return;
     }
     if (competitorsDead === true) {
-
       this.gameState.level++;
       this.levels();
       this.resetFocusCharacter();
@@ -458,7 +446,6 @@ export default class GameController {
       this.drawingPlayingField(teamPlayers, teamCompetitors);
       return 'player';
     }
-
   }
 
   isCharacterDead(target, team, targetIndex) {
@@ -470,7 +457,7 @@ export default class GameController {
           array.splice(index, 1);
           result = true;
         }
-      })
+      });
     }
     return result;
   }
@@ -483,12 +470,11 @@ export default class GameController {
   }
 
   playerOrCompetitor(team, cell, index) {
-    return team.find(el => cell.children[0].className.includes(el.character.type) && el.position === index);
+    return team.find((el) => cell.children[0].className.includes(el.character.type) && el.position === index);
   }
 
   getAllAvailableMoves(position, move, boardSize) {
-    let array =
-      [...horizontalMovementAccess(position, boardSize, move), ...verticalMovementAccess(position, boardSize, move),
+    const array = [...horizontalMovementAccess(position, boardSize, move), ...verticalMovementAccess(position, boardSize, move),
       ...diagonalRightLeftFirstPart(position, boardSize, move), ...diagonalRightLeftSecondPart(position, boardSize, move),
       ...diagonalLeftRightFirstPart(position, boardSize, move), ...diagonalLeftRightSecondPart(position, boardSize, move)];
 

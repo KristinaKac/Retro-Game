@@ -6,9 +6,7 @@ import { Undead } from './characters/Undead';
 import { Daemon } from './characters/Daemon';
 
 export default class GameState {
-
   constructor() {
-
     // crt - current
     // char - character
 
@@ -21,15 +19,15 @@ export default class GameState {
     this.enterCell = null;
 
     this.focusChar = {
-      'current': false,
-      'index': null,
-      'type': null,
-      'char': null,
-      'position': null,
-      'attack': null,
-      'move': null,
-      'cell': null
-    }
+      current: false,
+      index: null,
+      type: null,
+      char: null,
+      position: null,
+      attack: null,
+      move: null,
+      cell: null,
+    };
 
     this.crtIndex = null;
     this.crtTypeIndex = null;
@@ -46,22 +44,32 @@ export default class GameState {
     this.competitorTypes = [Vampire, Undead, Daemon];
 
     this.moveRangeAttack = [
-      { name: 'bowman', type: 'player', move: 2, attack: 2 },
-      { name: 'swordsman', type: 'player', move: 4, attack: 1 },
-      { name: 'magician', type: 'player', move: 1, attack: 4 },
-      { name: 'vampire', type: 'competitor', move: 2, attack: 2 },
-      { name: 'undead', type: 'competitor', move: 4, attack: 1 },
-      { name: 'daemon', type: 'competitor', move: 1, attack: 4 }
+      {
+        name: 'bowman', type: 'player', move: 2, attack: 2,
+      },
+      {
+        name: 'swordsman', type: 'player', move: 4, attack: 1,
+      },
+      {
+        name: 'magician', type: 'player', move: 1, attack: 4,
+      },
+      {
+        name: 'vampire', type: 'competitor', move: 2, attack: 2,
+      },
+      {
+        name: 'undead', type: 'competitor', move: 4, attack: 1,
+      },
+      {
+        name: 'daemon', type: 'competitor', move: 1, attack: 4,
+      },
     ];
 
     this.initPlayersPositions = null;
     this.initCompetitorsPositions = null;
-
   }
-  static from(object) {
 
+  static from(object) {
     // TODO: create object
     return null;
   }
-
 }

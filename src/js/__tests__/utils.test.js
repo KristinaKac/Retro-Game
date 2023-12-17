@@ -1,5 +1,4 @@
-import { calcTileType } from '../utils';
-import { availableAttack } from '../utils';
+import { calcTileType, availableAttack } from '../utils';
 
 test.each([
   [0, 8, 'top-left'],
@@ -22,10 +21,18 @@ test.each([
 });
 
 test.each([
-  [2, { name: 'bowman', type: 'player', move: 2, attackRange: 3 }, 8, 23],
-  [17, { name: 'bowman', type: 'player', move: 2, attackRange: 2 }, 8, 19],
-  [44, { name: 'magician', type: 'player', move: 1, attackRange: 4 }, 8, 55],
-  [58, { name: 'swordsman', type: 'player', move: 4, attackRange: 1 }, 8, 5],
+  [2, {
+    name: 'bowman', type: 'player', move: 2, attackRange: 3,
+  }, 8, 23],
+  [17, {
+    name: 'bowman', type: 'player', move: 2, attackRange: 2,
+  }, 8, 19],
+  [44, {
+    name: 'magician', type: 'player', move: 1, attackRange: 4,
+  }, 8, 55],
+  [58, {
+    name: 'swordsman', type: 'player', move: 4, attackRange: 1,
+  }, 8, 5],
 ])('number of possible attack received: index %i, attack %i, boardSize %s', (index, attack, board, expected) => {
   const result = availableAttack(index, attack, board);
   const set = new Set(result);

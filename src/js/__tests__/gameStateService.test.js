@@ -1,17 +1,20 @@
-import GameStateService from "../GameStateService";
+import GameStateService from '../GameStateService';
+
 jest.mock('../GameStateService');
 
 beforeEach(() => {
-    jest.resetAllMocks();
+  jest.resetAllMocks();
 });
 test('successful loading of load method', () => {
-    let stateService = new GameStateService();
-    const result = { level: 1, attack: 25, defence: 25, health: 100, type: 'bowman' };
-    stateService.load.mockReturnValue(result);
-    expect(stateService.load()).toBe(result);
+  const stateService = new GameStateService();
+  const result = {
+    level: 1, attack: 25, defence: 25, health: 100, type: 'bowman',
+  };
+  stateService.load.mockReturnValue(result);
+  expect(stateService.load()).toBe(result);
 });
 test('method failed to load', () => {
-    let stateService = new GameStateService(null);
-    stateService.load = jest.fn(() => {throw new Error('Invalid state')});
-    expect(() => stateService.load()).toThrowError(new Error('Invalid state'));
+  const stateService = new GameStateService(null);
+  stateService.load = jest.fn(() => { throw new Error('Invalid state'); });
+  expect(() => stateService.load()).toThrowError(new Error('Invalid state'));
 });
