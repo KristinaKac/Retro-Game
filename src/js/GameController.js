@@ -149,14 +149,6 @@ export default class GameController {
       return `\u{1F396}${el.character.level} \u{2694}${el.character.attack} \u{1F6E1}${el.character.defence} \u{2764}${el.character.health}`;
     }
   }
-  // showTooltipCharacter(index) {
-
-  //   const arr = [...this.gameState.teamPlayers, ...this.gameState.teamCompetitors];
-  //   const el = arr.find(el => el.position === index);
-  //   if (el) {
-  //     return `\u{1F396}${el.character.level} \u{2694}${el.character.attack} \u{1F6E1}${el.character.defence} \u{2764}${el.character.health}`;
-  //   }
-  // }
 
   async onCellClick(index) {
     if (this.gameState.move === 'player') {
