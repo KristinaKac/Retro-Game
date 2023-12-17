@@ -20,9 +20,6 @@ export function* characterGenerator(allowedTypes, maxLevel) {
   }
 }
 
-
-
-
 /**
  * Формирует массив персонажей на основе characterGenerator
  * @param allowedTypes массив классов

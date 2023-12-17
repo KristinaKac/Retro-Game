@@ -228,5 +228,7 @@ export function availableAttack(index, attack, board) {
     bottomMove = bottomMove + 1;
   }
   availableAttack = availableAttack.filter(el => el != index);
+
   return availableAttack;
 }
+

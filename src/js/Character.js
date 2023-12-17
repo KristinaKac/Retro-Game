@@ -17,7 +17,7 @@ export default class Character {
     this.level = level;
     this.attack = 0;
     this.defence = 0;
-    this.health = 10;
+    this.health = 100;
     this.type = type;
 
     if (new.target.name === 'Character') {

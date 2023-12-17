@@ -7,8 +7,6 @@ import {
 
 import GameState from './GameState';
 import GamePlay from './GamePlay';
-import Team from './Team';
-import { Bowman } from './characters/Bowman';
 import Character from './Character';
 
 export default class GameController {
@@ -16,17 +14,6 @@ export default class GameController {
     this.gamePlay = gamePlay;
     this.stateService = stateService;
     this.gameState = new GameState();
-  }
-
-  initPositions(column1, column2) {
-    const arr = [];
-    const board = this.gamePlay.boardSize;
-    for (let i = 0; i < ((board * board) - 1); i++) {
-      if (i % board === column1 || i % board === column2) {
-        arr.push(i);
-      }
-    }
-    return arr;
   }
 
   init() {
@@ -46,7 +33,6 @@ export default class GameController {
 
     this.addListeners();
   }
-
   levels() {
     switch (this.gameState.level) {
       case 1:
@@ -87,7 +73,7 @@ export default class GameController {
   }
   onLoadGameClick() {
     const loadedState = this.stateService.load();
-    
+
     if (!loadedState) {
       throw new Error('Доступных сохранений нет.');
     }
@@ -108,7 +94,6 @@ export default class GameController {
 
     this.addListeners();
   }
-
   onCellEnter(index) {
     this.gameState.enterIndex = index;
     this.gameState.enterCell = this.gamePlay.cells[this.gameState.enterIndex];
@@ -137,27 +122,6 @@ export default class GameController {
       });
     }
   }
-
-  showTooltipCharacter(index) {
-    const arr = [...this.gameState.teamPlayers, ...this.gameState.teamCompetitors];
-    const el = arr.find(el => el.position === index);
-    if (el) {
-      return `\u{1F396}${el.character.level} \u{2694}${el.character.attack} \u{1F6E1}${el.character.defence} \u{2764}${el.character.health}`;
-    }
-  }
-
-  redrawingMove(character, newIndex, team) {
-    team.find(el => { if (el === character) { el.position = newIndex } });
-  }
-
-  setCurrentCharacteristics(index, type, characterPosition, attackMove, cell) {
-    this.gameState.currentIndex = index;
-    this.gameState.typeCurrentIndex = type;
-    this.gameState.currentCharacterPosition = characterPosition;
-    this.gameState.currentAttackMove = attackMove;
-    this.gameState.currentCell = cell;
-  }
-
   async onCellClick(index) {
     if (this.gameState.move === 'player') {
 
@@ -229,6 +193,9 @@ export default class GameController {
       if (this.gameState.typeCurrentIndex === 'competitor') {
 
         if (this.gameState.focusCharacter.current === true) {
+
+          console.log(this.gameState.focusCharacter.attackMove)
+          
           const attack = availableAttack(this.gameState.focusCharacter.index, this.gameState.focusCharacter.attackMove, this.gamePlay.boardSize);
           if (attack.includes(this.gameState.currentIndex)) {
             try {
@@ -264,6 +231,55 @@ export default class GameController {
       }
     }
   }
+  onCellLeave(index) {
+    if (this.gamePlay.cells[index].children[0]) {
+      this.gamePlay.hideCellTooltip(index);
+      this.gamePlay.setCursor('auto');
+    } else {
+      this.gamePlay.deselectCell(index);
+    }
+    if (this.gameState.typeCurrentIndex === 'character') {
+      const el = this.gameState.teamCompetitors.find(el => el.position === index);
+      if (el) {
+        this.gamePlay.deselectCell(index);
+        this.gamePlay.setCursor('auto');
+      }
+    }
+    if (this.gameState.typeCurrentIndex === 'competitor') {
+      this.gamePlay.deselectCell(index);
+    }
+  }
+
+  initPositions(column1, column2) {
+    const arr = [];
+    const board = this.gamePlay.boardSize;
+    for (let i = 0; i < ((board * board) - 1); i++) {
+      if (i % board === column1 || i % board === column2) {
+        arr.push(i);
+      }
+    }
+    return arr;
+  }
+  setCurrentCharacteristics(index, type, characterPosition, attackMove, cell) {
+    this.gameState.currentIndex = index;
+    this.gameState.typeCurrentIndex = type;
+    this.gameState.currentCharacterPosition = characterPosition;
+    this.gameState.currentAttackMove = attackMove;
+    this.gameState.currentCell = cell;
+  }
+
+  showTooltipCharacter(index) {
+    console.log(this.gameState.teamPlayers)
+    const arr = [...this.gameState.teamPlayers, ...this.gameState.teamCompetitors];
+    const el = arr.find(el => el.position === index);
+    if (el) {
+      return `\u{1F396}${el.character.level} \u{2694}${el.character.attack} \u{1F6E1}${el.character.defence} \u{2764}${el.character.health}`;
+    }
+  }
+
+  redrawingMove(character, newIndex, team) {
+    team.find(el => { if (el === character) { el.position = newIndex } });
+  }
 
   async moveCompetitor() {
 
@@ -287,20 +303,8 @@ export default class GameController {
 
         this.gamePlay.redrawPositions([...this.gameState.teamPlayers, ...this.gameState.teamCompetitors]);
       } else {
-        const position = this.gameState.currentCharacterPosition.position;
-        const boardSize = this.gamePlay.boardSize;
-        const move = this.gameState.currentAttackMove.move;
-
-        let array =
-          [...horizontalMovementAccess(position, boardSize, move),
-          ...verticalMovementAccess(position, boardSize, move),
-          ...diagonalRightLeftFirstPart(position, boardSize, move),
-          ...diagonalRightLeftSecondPart(position, boardSize, move),
-          ...diagonalLeftRightFirstPart(position, boardSize, move),
-          ...diagonalLeftRightSecondPart(position, boardSize, move)];
-
+        let array = this.getAllMoves(this.gameState.currentCharacterPosition.position, this.gameState.currentAttackMove.move, this.gamePlay.boardSize);
         array = array.filter(el => !this.gamePlay.cells[el].children[0]);
-
         const randomMove = array[Math.floor(Math.random() * array.length)];
         this.redrawingMove(randomCompetitor, randomMove, this.gameState.teamCompetitors);
         this.gamePlay.redrawPositions([...this.gameState.teamPlayers, ...this.gameState.teamCompetitors]);
@@ -308,7 +312,6 @@ export default class GameController {
       this.gameState.move = 'player';
     }
   }
-
   async attackCalculation(attacker, target, targetIndex) {
     const damage = Math.round(Math.max(attacker.attack - target.defence, attacker.attack * 0.1));
     try {
@@ -320,7 +323,8 @@ export default class GameController {
     const isPlayerDead = this.isCharacterDead(target, this.gameState.teamPlayers, targetIndex);
     const isCompetitorDead = this.isCharacterDead(target, this.gameState.teamCompetitors, targetIndex);
 
-    if (isPlayerDead && this.gameState.focusCharacter.current === true) {
+    if (isPlayerDead && this.gameState.focusCharacter.current === true &&
+      this.gameState.focusCharacter.positionedCharacter.character === target) {
       this.gameState.focusCharacter = {
         'current': false,
         'index': null,
@@ -332,26 +336,17 @@ export default class GameController {
       this.gamePlay.cells.forEach((cell, i) => this.gamePlay.deselectCell(i));
     }
   }
+  getAllMoves(position, move, boardSize) {
 
-  isCharacterDead(target, team, targetIndex) {
-    let result = false;
-    if (target.health <= 0) {
-      team.forEach((el, index, array) => {
-        if (el.character === target) {
-          this.gamePlay.hideCellTooltip(targetIndex);
-          array.splice(index, 1);
-          result = true;
-        }
-      })
-    }
-    return result;
-  }
+    let array =
+      [...horizontalMovementAccess(position, boardSize, move),
+      ...verticalMovementAccess(position, boardSize, move),
+      ...diagonalRightLeftFirstPart(position, boardSize, move),
+      ...diagonalRightLeftSecondPart(position, boardSize, move),
+      ...diagonalLeftRightFirstPart(position, boardSize, move),
+      ...diagonalLeftRightSecondPart(position, boardSize, move)];
 
-  isTeamDead(team) {
-    if (team.length === 0) {
-      return true;
-    }
-    return false;
+    return array;
   }
 
   updateWinners(team) {
@@ -386,57 +381,6 @@ export default class GameController {
     this.gameState.teamCompetitors = randomInitPositions(teamCompetitors, this.gameState.initCompetitorsPositions);
 
     this.gamePlay.redrawPositions([...this.gameState.teamPlayers, ...this.gameState.teamCompetitors]);
-  }
-
-  checkNextLevel() {
-    // Проверка остались ли игроки
-    const playersDead = this.isTeamDead(this.gameState.teamPlayers);
-    const competitorsDead = this.isTeamDead(this.gameState.teamCompetitors);
-
-    if ((playersDead === true && this.gameState.level === 4) ||
-      (competitorsDead === true && this.gameState.level === 4) ||
-      (playersDead === true)) {
-      this.gamePlay.boardEl.style.pointerEvents = 'none';
-    }
-    if (competitorsDead === true) {
-
-      this.gameState.level++;
-      this.levels();
-
-      let updatedPlayers = this.updateWinners(this.gameState.teamPlayers);
-      const generatePlayers = this.gameState.amountParticipants - this.gameState.teamPlayers.length;
-
-      updatedPlayers = updatedPlayers.map((item) => {
-        const obj = Object.setPrototypeOf(item, Character.prototype);
-        return obj;
-      });
-
-      const teamPlayers = generateTeam(this.gameState.playerTypes, 1, generatePlayers, updatedPlayers);
-      const teamCompetitors = generateTeam(this.gameState.competitorTypes, 1, this.gameState.amountParticipants);
-
-      this.drawingPlayingField(teamPlayers, teamCompetitors);
-      return 'player';
-    }
-
-  }
-
-  onCellLeave(index) {
-    if (this.gamePlay.cells[index].children[0]) {
-      this.gamePlay.hideCellTooltip(index);
-      this.gamePlay.setCursor('auto');
-    } else {
-      this.gamePlay.deselectCell(index);
-    }
-    if (this.gameState.typeCurrentIndex === 'character') {
-      const el = this.gameState.teamCompetitors.find(el => el.position === index);
-      if (el) {
-        this.gamePlay.deselectCell(index);
-        this.gamePlay.setCursor('auto');
-      }
-    }
-    if (this.gameState.typeCurrentIndex === 'competitor') {
-      this.gamePlay.deselectCell(index);
-    }
   }
   displayOfAvailableMoves(index) {
     const position = this.gameState.currentCharacterPosition.position;
@@ -486,13 +430,64 @@ export default class GameController {
     }
     this.gameState.currentAttackMove = this.getMoveAttack(this.gameState.currentCharacterPosition);
   }
-  playerOrCompetitor(team, cell, index) {
-    return team.find(el => cell.children[0].className.includes(el.character.type) && el.position === index);
-  }
   getMoveAttack(positionedCharacter) {
     if (positionedCharacter) {
       return this.gameState.moveRangeAttack.find(el => el.name === positionedCharacter.character.type);
     }
     return null;
+  }
+
+  checkNextLevel() {
+    // Проверка остались ли игроки
+    const playersDead = this.isTeamDead(this.gameState.teamPlayers);
+    const competitorsDead = this.isTeamDead(this.gameState.teamCompetitors);
+
+    if ((playersDead === true && this.gameState.level === 4) ||
+      (competitorsDead === true && this.gameState.level === 4) ||
+      (playersDead === true)) {
+      this.gamePlay.boardEl.style.pointerEvents = 'none';
+    }
+    if (competitorsDead === true) {
+
+      this.gameState.level++;
+      this.levels();
+
+      let updatedPlayers = this.updateWinners(this.gameState.teamPlayers);
+      const generatePlayers = this.gameState.amountParticipants - this.gameState.teamPlayers.length;
+
+      updatedPlayers = updatedPlayers.map((item) => {
+        const obj = Object.setPrototypeOf(item, Character.prototype);
+        return obj;
+      });
+
+      const teamPlayers = generateTeam(this.gameState.playerTypes, 1, generatePlayers, updatedPlayers);
+      const teamCompetitors = generateTeam(this.gameState.competitorTypes, 1, this.gameState.amountParticipants);
+
+      this.drawingPlayingField(teamPlayers, teamCompetitors);
+      return 'player';
+    }
+
+  }
+  isCharacterDead(target, team, targetIndex) {
+    let result = false;
+    if (target.health <= 0) {
+      team.forEach((el, index, array) => {
+        if (el.character === target) {
+          this.gamePlay.hideCellTooltip(targetIndex);
+          array.splice(index, 1);
+          result = true;
+        }
+      })
+    }
+    return result;
+  }
+  isTeamDead(team) {
+    if (team.length === 0) {
+      return true;
+    }
+    return false;
+  }
+  playerOrCompetitor(team, cell, index) {
+    return team.find(el => cell.children[0].className.includes(el.character.type) && el.position === index);
   }
 }
