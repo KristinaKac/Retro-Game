@@ -11,7 +11,7 @@
 ![CSS3](https://img.shields.io/badge/-CSS3-1572b6?logo=css3&logoColor=white)
 ![Static Badge](https://img.shields.io/badge/Jest-%2315c213?style=flat&logo=Jest&labelColor=%2315c213)
 
-## Сылка на проект на gh-pages:
+## Ссылка на проект на gh-pages:
 
 Проект доступен по [ссылке](https://kristinakac.github.io/Retro-Game/).
 
